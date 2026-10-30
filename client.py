@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-Графічний клієнт месенджера (tkinter) у стилі Telegram.
-
-Запуск:  python client.py [--host localhost] [--port 5050]
-Можна запускати кілька копій одночасно (різні акаунти) для перевірки.
-Зображення лежать у папці assets/ поруч зі скриптом (без них клієнт теж працює).
-"""
 import argparse
 import json
 import math
@@ -21,7 +14,6 @@ from tkinter import messagebox
 GENERAL = "#general"
 PENDING, SENT, DELIVERED, READ = -1, 0, 1, 2
 
-# ---- палітра (Telegram, світла тема) ----
 BLUE, BLUE_DARK = "#3390ec", "#2b7fd1"
 WALL = "#cddfbf"                      # шпалери чату
 OUT_BG, IN_BG = "#effdde", "#ffffff"  # бульбашки
@@ -43,9 +35,6 @@ def load_image(name):
         return None
 
 
-# --------------------------------------------------------------------------- #
-#  Мережевий шар: читає сокет в окремому потоці, кладе події у чергу для GUI
-# --------------------------------------------------------------------------- #
 class Net:
     def __init__(self, events: queue.Queue):
         self.events = events
@@ -87,9 +76,7 @@ class Net:
             self.sock = None
 
 
-# --------------------------------------------------------------------------- #
 #  Допоміжні елементи
-# --------------------------------------------------------------------------- #
 def rpoly(x1, y1, x2, y2, rad):
     """Контур прямокутника зі своїм радіусом для кожного кута (tl, tr, br, bl)."""
     pts = []
@@ -199,9 +186,6 @@ def bind_wheel(widget, handler):
     widget.bind("<Button-5>", lambda e: handler(56))
 
 
-# --------------------------------------------------------------------------- #
-#  Список чатів (ліва панель)
-# --------------------------------------------------------------------------- #
 class ChatList(tk.Canvas):
     def __init__(self, master, app):
         super().__init__(master, bg="white", highlightthickness=0)
@@ -277,10 +261,6 @@ class ChatList(tk.Canvas):
         self.create_text(76, y + 38, text=ellipsize(prev, self.f_prev, W - 76 - 14 - (badge_w + 8 if badge_w else 0)),
                          anchor="nw", font=self.f_prev, fill=sub)
 
-
-# --------------------------------------------------------------------------- #
-#  Вікно повідомлень: бульбашки на шпалерах із напівпрозорим логотипом
-# --------------------------------------------------------------------------- #
 class ChatView(tk.Canvas):
     PADX, GAP_SAME, GAP_DIFF = 11, 2, 8
 
@@ -441,9 +421,6 @@ class ChatView(tk.Canvas):
                              fill=META_OUT if mine else META_IN)
 
 
-# --------------------------------------------------------------------------- #
-#  Застосунок
-# --------------------------------------------------------------------------- #
 class App(tk.Tk):
     def __init__(self, host, port):
         super().__init__()
@@ -483,7 +460,6 @@ class App(tk.Tk):
         general = [GENERAL] if (not f or f in "загальний чат") else []
         return general + names
 
-    # ------------------------------------------------------------------ вхід
     def build_login(self):
         self.login = tk.Frame(self, bg="white")
         self.login.pack(fill="both", expand=True)
@@ -527,7 +503,6 @@ class App(tk.Tk):
         self.net.send({"type": kind, "user": self.e_user.get().strip(),
                        "password": self.e_pass.get()})
 
-    # ------------------------------------------------------------ головне вікно
     def build_main(self):
         self.login.destroy()
         self.main = tk.Frame(self, bg="white")
@@ -670,7 +645,6 @@ class App(tk.Tk):
             self.net.send({"type": "ping", "t": time.perf_counter()})
             self.after(5000, self.ping)
 
-    # --------------------------------------------------- обробка подій від сервера
     def poll(self):
         try:
             while True:

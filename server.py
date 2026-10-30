@@ -1,12 +1,4 @@
 #!/usr/bin/env python3
-"""
-Сервер месенджера (TCP, окремий потік на кожне підключення).
-
-Протокол: JSON-рядки, один об'єкт на рядок (розділювач "\n"), UTF-8.
-Зберігання: SQLite (користувачі з PBKDF2-хешами паролів + історія повідомлень).
-
-Запуск:  python server.py [--host 0.0.0.0] [--port 5050] [--db messenger.db]
-"""
 import argparse
 import hashlib
 import hmac
@@ -32,9 +24,6 @@ SENT, DELIVERED, READ = 0, 1, 2
 log = logging.getLogger("server")
 
 
-# --------------------------------------------------------------------------- #
-#  Сховище (SQLite)
-# --------------------------------------------------------------------------- #
 class Store:
     def __init__(self, path: str):
         self.db = sqlite3.connect(path, check_same_thread=False)
@@ -145,9 +134,6 @@ class Store:
             return cur.rowcount
 
 
-# --------------------------------------------------------------------------- #
-#  Хаб: хто зараз онлайн
-# --------------------------------------------------------------------------- #
 class Hub:
     def __init__(self, store: Store):
         self.store = store
@@ -202,9 +188,6 @@ class Hub:
             self.broadcast({"type": "presence", "user": session.user, "online": False})
 
 
-# --------------------------------------------------------------------------- #
-#  Сесія одного клієнта (виконується у власному потоці)
-# --------------------------------------------------------------------------- #
 class Session:
     def __init__(self, hub: Hub, conn: socket.socket, addr):
         self.hub, self.store = hub, hub.store
@@ -253,7 +236,6 @@ class Session:
                 pass
             log.info("disconnect %s (%s)", self.addr, self.user)
 
-    # --- маршрутизація ---
     def dispatch(self, m):
         t = m.get("type")
         if t == "ping":
@@ -277,7 +259,6 @@ class Session:
         else:
             self.error(f"Невідомий тип: {t}")
 
-    # --- обробники ---
     def on_auth(self, m, register):
         if self.user:
             return self.error("Ви вже увійшли")
@@ -337,7 +318,6 @@ class Session:
             self.hub.send_to(other, {"type": "read", "by": self.user})
 
 
-# --------------------------------------------------------------------------- #
 def main():
     ap = argparse.ArgumentParser(description="Сервер месенджера")
     ap.add_argument("--host", default="0.0.0.0")
